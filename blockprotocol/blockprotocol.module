@@ -1,0 +1,74 @@
+<?php
+/**
+ * Implements hook_block_info().
+ */
+function blockprotocol_block_info() {
+  $blocks['blockprotocol'] = array(
+    'info' => t('Блок со списком протоколов'),
+    'cache' => DRUPAL_CACHE_GLOBAL,
+  );
+ 
+  return $blocks;
+}
+
+  
+//тело блока
+function blockprotocol_block_view($delta=''){
+	function ListProtocol($discipline){
+		
+	
+		// Выборка протоколов 
+	$query = db_query("SELECT date, name_competition.rang AS rang,
+                              name_competition.name_ru AS competition, 
+                              age_category.name_ru AS age_category,  
+						      IF(devizion = 1, 'классическому', '') AS dev, 
+                              COUNT(competition.id) AS row,
+  						      IF(discipline = 'powerlifting', 'по троеборью', 'по жиму лежа') AS discipline
+                       FROM `competition`
+                       INNER JOIN name_competition ON competition.competition = name_competition.id
+                       INNER JOIN age_category ON competition.age_category = age_category.id
+                       WHERE discipline = '{$discipline}'
+                       GROUP BY date, competition, devizion, age_category  
+                       ORDER BY tstamp DESC
+											 LIMIT 20");
+											
+	// Формирование ячек заголовсков
+	$header = array('Турнир', 'Уч.', 'Год');						
+	// Формирование ячеек таблицы "Результатов"
+	while ($rows_to_table = $query->fetchAssoc()) {
+          $competion = $rows_to_table['competition'] . ' ' 
+                       . $rows_to_table['discipline'] . ' ' 
+                       . $rows_to_table['dev'] . ' ' 
+                       . $rows_to_table['age_category']; 
+          if($rows_to_table['rang'] == 'lnternational') {$competion = "<b>{$competion}</b>";}         
+		  $row_to_table[] = array(			
+            $competion,
+            $rows_to_table['row'],
+            $rows_to_table['date'],
+            ); 
+	} 
+	
+	
+	// Запись результатов в ячейки таблицы
+	$TableProtocol = theme('table', array(
+	  'header' => $header,
+	  'rows' => $row_to_table,
+	  'attributes' => array('class' => array('MyTable')),
+	  'empty' => 'Нет протоколов.',
+	  ));
+	  
+		return $TableProtocol;
+	}
+	
+		$block = array();
+			$block['subject'] = 'Последние добавленные протоколы соревнований';
+			$block['content'] = 
+				"<table>
+					<tr><th>Троеборье</th><th>Жим лежа</th>
+                    <tr>
+                        <td style='width: 50%; vertical-align: top'>" . ListProtocol('powerlifting') . "</td>
+                        <td style='width: 50%; vertical-align: top'>" . ListProtocol('brench') . "</td>
+                    </tr>
+				</table>";
+      return $block;
+    }

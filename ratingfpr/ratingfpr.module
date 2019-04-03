@@ -1,0 +1,48 @@
+<?php
+/**
+ * Implements hook_menu().
+ */
+function ratingfpr_menu() {
+  // массивы для формирования URL
+  $AgeCategory = array('SJ', 'J', 'O', 'M1', 'M2', 'M3', 'M4');
+  // Массив заголовков и URL.
+  $TitleURl = array(
+    'men' => 'Мужчины', 
+    'women' => 'Женщины', 
+  );
+
+  
+  // формирование пунктов меню и вкладок к ним
+  foreach ($TitleURl as $path => $title) {
+    if ($path == 'men' or $path ==  'women') {$MyMenu = 'menu-rf';}
+    // меню
+    $items["RUS/rating/{$path}"] = array(
+      'title' => 'Возрастные кат. ' . $title,
+      'page callback' => 'ratingfpr_page_default',
+      'page arguments' => array(2),
+      'access callback' => TRUE,
+      'menu_name' => $MyMenu,
+      'file' => 'ratingfpr.pages.inc',
+      'type' => MENU_NORMAL_ITEM,
+      //  'access arguments' => array('administer site configuration'),
+    );
+    
+    
+    // вкладки
+    foreach ($AgeCategory as $k => $age) {
+    $items["RUS/rating/{$path}/{$age}"] = array(
+      'title' => $age,
+      'page callback' => 'ratingfpr_page',
+      'page arguments' => array(2, 3),
+      'access callback' => TRUE,
+      'menu_name' => $MyMenu,
+      'file' => 'ratingfpr.pages.inc',
+      'weight' => $k,
+      'type' => MENU_LOCAL_TASK,
+      );
+    } 
+  }
+  
+  
+  return $items;
+}

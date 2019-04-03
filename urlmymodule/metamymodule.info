@@ -1,0 +1,4 @@
+name = Meta My Module
+description = Добавляю информацию в свои модули
+core = 7.x
+package = Custom

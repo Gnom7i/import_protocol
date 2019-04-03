@@ -1,0 +1,40 @@
+<?php
+/**
+ * Implements hook_block_info().
+ */
+function linkrecord_block_info() {
+  $blocks['linkrecord'] = array(
+    'info' => t('Ссылки на оф. рекорды'),
+    'cache' => DRUPAL_CACHE_GLOBAL,
+  );
+ 
+  return $blocks;
+}
+
+
+
+$query = db_query("SELECT url_drupal FROM {url_record}");
+while($value = $query->fetchAssoc()) {
+  // ищем страницу рекорда
+  if((drupal_get_path_alias() === $value['url_drupal'])) {    
+  
+  
+    //тело блока
+    function linkrecord_block_view($delta=''){
+    $query = 
+      db_query("SELECT * FROM  {url_record} WHERE url_drupal = '" . drupal_get_path_alias() . "'");
+    $result = $query->fetchAssoc();
+    
+    
+      $block = array();
+      if($delta == 'linkrecord') {
+        $block['subject'] = 'Важно! ';
+        $block['content'] = 
+          'Рекорды представленные на данной странице не являются официальными. ' . 
+          l('ССЫЛКА на официальный сайт', $result['url']);
+      }
+      return $block;
+    }
+
+  }
+}

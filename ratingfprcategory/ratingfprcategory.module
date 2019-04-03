@@ -1,0 +1,62 @@
+<?php
+/**
+ * Implements hook_menu().
+ */
+
+function ratingfprcategory_menu(){
+	//определяю константы с именами меню
+	define('MENU_RAW', 'menu-ru-raw');
+	define('MENU_EQ', 'menu-rf');
+	
+	
+	$TitleURl = array(
+		'men' => 'Мужчины', 
+		'woomen' => 'Женщины', 
+	);
+
+	
+	foreach($TitleURl as $u => $t) {
+		if ($u == 'men')     {$gender = 2; $_menu_name = MENU_EQ;}
+		if ($u == 'woomen')  {$gender = 1; $_menu_name = MENU_EQ;}
+		
+		
+		//пункты меню
+		$items["FPR/rating/cat/{$u}"] = array(
+			'title' => "Весовые кат. {$t}",//заголовок страницы
+			'page callback' => 'ratingfprcategory_pagedefault',//имя функции
+			'page arguments' => array(4), //аргументы: devizion, gender, category
+			'file' => 'ratingfprcategory.page.inc',
+			'type' => MENU_NORMAL_ITEM, //тип страницы
+			'access callback' => TRUE, //доступ к странице
+			'menu_name' => $_menu_name, //название меню
+		);
+	
+		
+		
+		
+		{//формирование фкладок
+			//запрос для разделения вкладок по гендору
+			$SqlCatName = db_query("SELECT cat FROM category
+										WHERE gender = '{$gender}'
+										ORDER BY id 
+				")->fetchCol();
+				
+				
+			foreach($SqlCatName as $w => $g){
+				//вкладки
+				$items["FPR/rating/cat/{$u}/{$g}"] = array(
+				'title' => $g,//заголовок страницы
+				'page callback' => 'ratingfprcategory_top',//имя функции
+				'page arguments' => array(3, 4, 5), //аргументы: gender, category, devizion
+				'file' => 'ratingfprcategory.page.inc',
+				'type' => MENU_LOCAL_TASK, //тип страницы
+				'access callback' => TRUE, //доступ к странице
+				'weight' => $w,
+			);
+			}
+		}		
+		}
+	return $items;
+}
+
+

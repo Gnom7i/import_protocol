@@ -1,0 +1,181 @@
+<?php
+ 
+ /**
+ * Implements hook_menu().
+ */
+function xray_menu() {
+ 
+/*    $items['simple_page'] = array(
+    'title' => 'Simple page',
+    'page callback' => 'xray_simple_page_content',
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'file' => 'xray.pages.inc',
+    'options' => array('attributes' => array('class' => array('test-class'))),
+  );  */
+  
+  
+  $items['suroveckij/faq'] = array(
+  'title' => 'Ответы на часто задоваемые вопросы Суровецкому А.Е.',
+  'page callback' => 'xray_database_table_data_page',
+  'access callback' => TRUE,
+//  'menu_name' => 'main-menu',
+  'access arguments' => array('administer site configuration'),
+  );
+  
+  // Основной таб
+  $items['suroveckij/faq/main-tab'] = array(
+  'title' => 'Все',
+  'page callback' => 'xray_database_table_data_page',
+  'access callback' => TRUE,
+  'menu_name' => 'main-menu',
+  'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+
+  // Таб "Подсобка"
+  $items['suroveckij/faq/podsobka-tab'] = array(
+  'title' => 'Подсобка',
+  'page callback' => 'xray_database_table_data_page',
+  'access callback' => TRUE,
+  'menu_name' => 'main-menu',
+  'type' => MENU_LOCAL_TASK,
+  );
+  
+  
+  // Таб "Техника выполнения"
+  $items['suroveckij/faq/tekhnika-tab'] = array(
+  'title' => 'Техника выполнения',
+  'page callback' => 'xray_database_table_data_page',
+  'access callback' => TRUE,
+  'menu_name' => 'main-menu',
+  'type' => MENU_LOCAL_TASK,
+  );
+  
+  
+  // Таб "Система тренировок"
+  $items['suroveckij/faq/sistem-tab'] = array(
+  'title' => 'Система тренировок',
+  'page callback' => 'xray_database_table_data_page',
+  'access callback' => TRUE,
+  'menu_name' => 'main-menu',
+  'type' => MENU_LOCAL_TASK,
+  );
+  
+  
+  // Таб "Медицина/Спортпит"
+  $items['suroveckij/faq/med_sporpit-tab'] = array(
+  'title' => 'Медицина/Спортпит',
+  'page callback' => 'xray_database_table_data_page',
+  'access callback' => TRUE,
+  'menu_name' => 'main-menu',
+  'type' => MENU_LOCAL_TASK,
+  );
+  
+  
+  // Таб "Общие вопросы"
+  $items['suroveckij/faq/global-tab'] = array(
+  'title' => 'Общее',
+  'page callback' => 'xray_database_table_data_page',
+  'access callback' => TRUE,
+  'menu_name' => 'main-menu',
+  'type' => MENU_LOCAL_TASK,
+  );
+
+
+  return $items;
+}
+
+
+function xray_database_table_data_page() {
+  // Подсобка
+  if (current_path() == 'drupal_suroveckij/faq/podsobka-tab') {
+    $header = array(t('Вопрос'), t('Ответ'));
+  $rows = array();
+  $query = db_select('suroveckij_faq', 't')
+    ->fields('t', array('id', 'category', 'question', 'answer'))
+    ->condition('t.category', 'Подсобка', '=')
+    ->orderBy('t.id', 'DESC')
+    ->execute();
+  while ($value = $query->fetchAssoc()) {
+    $rows[] = array(
+      nl2br($value['question']),
+      nl2br($value['answer']),      
+    );
+  }
+  return theme('table', array('header' => $header, 'rows' => $rows));
+  }
+  
+  
+  // Техника выполнения упражнений
+  if (current_path() == 'suroveckij/faq/tekhnika-tab') {
+    $header = array(t('Вопрос'), t('Ответ'));
+  $rows = array();
+  $query = db_select('suroveckij_faq', 't')
+    ->fields('t', array('id', 'category', 'question', 'answer'))
+    ->condition('t.category', 'Техника выполнения', '=')
+    ->orderBy('t.id', 'DESC')
+    ->execute();
+  while ($value = $query->fetchAssoc()) {
+    $rows[] = array(
+      nl2br($value['question']),
+      nl2br($value['answer']),      
+    );
+  }
+  return theme('table', array('header' => $header, 'rows' => $rows));
+  }
+
+  
+  // Медицина/Спортпит
+  if (current_path() == 'suroveckij/faq/med_sporpit-tab') {
+    $header = array(t('Вопрос'), t('Ответ'));
+  $rows = array();
+  $query = db_select('suroveckij_faq', 't')
+    ->fields('t', array('id', 'category', 'question', 'answer'))
+    ->condition('t.category', 'Медицина', '=')
+    ->orderBy('t.id', 'DESC')
+    ->execute();
+  while ($value = $query->fetchAssoc()) {
+    $rows[] = array(
+      nl2br($value['question']),
+      nl2br($value['answer']),      
+    );
+  }
+  return theme('table', array('header' => $header, 'rows' => $rows));
+  }
+  
+  
+  // Общие вопросы
+  if (current_path() == 'suroveckij/faq/global-tab') {
+    $header = array(t('Вопрос'), t('Ответ'));
+  $rows = array();
+  $query = db_select('suroveckij_faq', 't')
+    ->fields('t', array('id', 'category', 'question', 'answer'))
+    ->condition('t.category', 'Общее', '=')
+    ->orderBy('t.id', 'DESC')
+    ->execute();
+  while ($value = $query->fetchAssoc()) {
+    $rows[] = array(
+      nl2br($value['question']),
+      nl2br($value['answer']),      
+    );
+  }
+  return theme('table', array('header' => $header, 'rows' => $rows));
+  }
+
+
+  // Все вопросы
+  $header = array(t('Вопрос'), t('Ответ'));
+  $rows = array();
+  $query = db_select('suroveckij_faq', 't')
+    ->fields('t', array('id', 'category', 'question', 'answer'))
+    ->orderBy('t.id', 'DESC')
+    ->execute();
+  while ($value = $query->fetchAssoc()) {
+    $rows[] = array(
+      nl2br($value['question']),
+      nl2br($value['answer']),      
+    );
+  }
+  return theme('table', array('header' => $header, 'rows' => $rows));
+}

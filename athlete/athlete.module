@@ -1,0 +1,19 @@
+<?php
+/**
+ * Implements hook_menu().
+ */
+function athlete_menu() {
+ 
+  $items['athlete'] = array(
+    'title' => 'Страница профиля атлета: ID',
+    'page callback' => 'athlete_simple_page_content',
+	
+    'access callback' => TRUE,
+//    'menu_name' => 'main-menu',
+	'page arguments' => array(1),
+    'file' => 'athlete.pages.inc',
+    'options' => array('attributes' => array('class' => array('test-class'))),
+  );
+ 
+  return $items;
+}

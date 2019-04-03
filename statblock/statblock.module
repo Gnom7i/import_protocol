@@ -1,0 +1,81 @@
+<?php
+/**
+ * Implements hook_block_info().
+ */
+function statblock_block_info() {
+  $blocks['statblock'] = array(
+    'info' => t('Статистика регионов'),
+    'cache' => DRUPAL_CACHE_GLOBAL,
+  );
+  
+  return $blocks;
+}
+
+  
+//тело блока
+function statblock_block_view($delta=''){
+	$query = db_query("SELECT fo, count(athlete_id) as athlete FROM rating_dvfo_athlete
+						GROUP BY fo
+						HAVING fo IS NOT NULL AND fo != ''
+						ORDER BY athlete DESC");
+	// обработка запроса					
+	while ($result = $query->fetchAssoc()) {
+			$i = 0;
+			$fo[] = $result['fo'];
+			$athlete[] = $result['athlete'];
+			settype($fo[$i++], 'string');
+//			settype($athlete[$i++], 'integer');
+	}
+	// Приведение типа данных к числу
+	
+
+	
+	
+	
+	settype($athlete[0], 'integer');
+	settype($athlete[1], 'integer');
+	settype($athlete[2], 'integer');
+	settype($athlete[3], 'integer');
+	settype($athlete[4], 'integer');
+	settype($athlete[5], 'integer');
+	settype($athlete[6], 'integer');
+	settype($athlete[7], 'integer');
+	settype($athlete[8], 'integer');
+	
+	/* print gettype($fo[0]);
+	print $fo[0]; */
+ 	// print '<pre>';
+	// print_r($fo);
+	// print_r($athlete);
+	
+	
+	
+	
+	
+	// Структура графика
+	$chart = array(
+    '#type' => 'chart',
+    '#title' => t('Колличество спортсменов по ФО'),
+    '#chart_type' => 'pie',
+    '#chart_library' => 'google', // Allowed values: 'google' or 'highcharts'
+    '#legend_position' => 'right',
+    '#data_labels' => TRUE,
+    '#tooltips' => FALSE,
+	);
+	$chart['pie_data'] = array(
+    '#type' => 'chart_data',
+    '#title' => t('Федеральные округа'),
+    '#labels' => $fo,
+    '#data' => $athlete,
+	);
+
+	$example['chart'] = $chart;
+	$fo = drupal_render($example);
+	
+	
+	
+	
+	$block['subject'] = 'Статистика по регионам';
+	$block['content'] = $fo;
+      return $block;
+    }

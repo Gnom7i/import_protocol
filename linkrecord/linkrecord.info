@@ -1,0 +1,4 @@
+name = Linc Record
+description = Ссылки на оффициальные рекорды
+core = 7.x
+package = Custom

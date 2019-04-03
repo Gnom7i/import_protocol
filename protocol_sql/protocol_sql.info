@@ -1,0 +1,5 @@
+name = Insert Protocol
+description = Распределение данных по таблицам импортируемого протокола
+core = 7.x
+package = Custom
+stylesheets[all][] = MyTable.css

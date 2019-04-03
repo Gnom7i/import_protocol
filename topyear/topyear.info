@@ -1,0 +1,4 @@
+name = Top Year
+description = Блок ТОП-10 на главной
+core = 7.x
+package = Custom

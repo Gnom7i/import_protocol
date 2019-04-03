@@ -1,0 +1,4 @@
+﻿name = Rating FPR
+description = Рейтинги ФП России.
+core = 7.x
+stylesheets[all][] = MyTable.css

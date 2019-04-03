@@ -1,0 +1,5 @@
+name = Rating FPR category
+description = Рейтинги ФП России по весовым категориям.
+package = Custom
+core = 7.x
+stylesheets[all][] = MyTable.css

@@ -1,0 +1,33 @@
+<?php
+/**
+ * Implements hook_preprocess_html().
+ */
+
+
+function athlete_preprocess_html(&$vars) {
+	$arg = arg();
+	if ($arg[0] == 'athlete') {
+		settype($arg[1], "integer");
+		// Данные спортсмена
+		$QueryName = db_query("SELECT c.athlete_id, c.name, c.age, c.fo, c.subject_rf, c.city,
+								IF(c.gender = 1, 'Женщина', 'Мужчина') AS gender, cntr.name AS country
+							FROM {rating_dvfo_athlete} AS c
+							INNER JOIN {country} AS cntr ON c.country = cntr.iso
+							WHERE c.athlete_id = '{$arg[1]}'")->fetchAssoc();
+		// Лучшие результаты спортсмена
+		$QueryMax = db_query("SELECT MAX(total) as t, Max(squat) as s, MAX(brench) as b, MAX(deadlift) as d, MAX(wilks) as w
+				FROM {competition} 
+				WHERE athlete_id = {$arg[1]}")->fetchAssoc();
+		
+		
+		
+	  drupal_add_html_head(array(
+		'#type' => 'html_tag',
+		'#tag' => 'meta',
+		'#attributes' => array(
+		  'name' => 'description',
+		  'content' => "{$QueryName['name']}: {$QueryName['age']}, {$QueryName['fo']}, {$QueryName['subject_rf']}, {$QueryName['city']}. Лучшая сумма {$QueryMax['t']} ({$QueryMax['s']}+{$QueryMax['b']}+{$QueryMax['d']}), вилкс {$QueryMax['w']}. График прогресса в пауэрлифтинге и троеборье классическом, а так же по отдельным движениям.",
+		)
+	  ), 'meta_viewport');
+	}
+}

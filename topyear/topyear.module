@@ -1,0 +1,138 @@
+<?php
+/**
+ * Implements hook_block_info().
+ */
+function topyear_block_info() {
+  $blocks['topyear'] = array(
+    'info' => t('TОП-10 на главной'),
+    'cache' => DRUPAL_CACHE_GLOBAL,
+  );
+ 
+  return $blocks;
+}
+
+  
+//тело блока
+function topyear_block_view($delta=''){
+	function TopYear($gender, $devizion, $discipline){
+	db_query("CREATE TEMPORARY TABLE tmp70 
+    SELECT DISTINCT c1.athlete_id, max(c1.wilks) AS wi
+    FROM competition AS c1 
+    INNER JOIN rating_dvfo_athlete AS a1 USING (athlete_id)
+    WHERE country = 643 
+    AND date =  YEAR(CURDATE()) - 1
+    AND gender = {$gender} 
+    AND devizion = {$devizion} 
+    AND discipline = '{$discipline}'
+    GROUP BY c1.athlete_id 
+    ORDER BY wi DESC 
+    LIMIT 10;");
+	
+		// Выборка спортменов
+	$query = db_query("SELECT DISTINCT a.athlete_id, a.name, a.age, a.fo, a.subject_rf, a.city,
+						c.total, c.squat, c.brench, c.deadlift, c.position, c.date, c.weight, (c.date - a.age) AS age,c.wilks,
+						LEFT(nc.name_ru, 50) AS competition, IF(devizion = 1, 'БЭ', 'ЭК') AS devizion, ac.reduction AS age_category, 
+						IF(ctgr.cat = '120_plus', '120+', ctgr.cat) AS category
+						FROM competition AS c
+                        INNER JOIN tmp70 AS t USING (athlete_id)
+						INNER JOIN name_competition AS nc ON c.competition = nc.id
+						INNER JOIN age_category AS ac ON c.age_category = ac.id 
+						INNER JOIN rating_dvfo_athlete AS a USING (athlete_id)
+						INNER JOIN category AS ctgr USING (gender) 
+						WHERE t.wi = c.wilks 
+							AND c.weight BETWEEN ctgr.min AND ctgr.max
+							AND discipline = '{$discipline}'
+						GROUP BY a.athlete_id
+						ORDER BY NULL, wilks DESC");
+						
+						
+	// удаление временной таблицы
+  db_query('DROP TABLE tmp70');
+						
+						
+	// Формирование ячек заголовсков
+	$header = array('Имя', 'Воз.',  'W/Кат.', 'Вес/Результат', 'Турнир');						
+	// Формирование ячеек таблицы "Результатов"
+	while ($value = $query->fetchAssoc()) {
+		if ($discipline === 'brench') {
+			$value['total'] = $value['brench'];
+		}
+		$rows2[] = array(
+			"<a target='_blank' title='{$value['name']}. Таблица результатов' href='/athlete/{$value['athlete_id']}'>{$value['name']}</a>",
+			$value['age'],
+			$value['wilks'] . '/' . $value['category'],
+			$value['weight'] . '/' . $value['total'],
+			$value['competition'],
+		); 
+	} 
+	$discipline = ($discipline == 'powerlifting') ? 'Троеборье' : 'Жим лежа';
+	$gender = ($gender == 1) ? 'Женщины.' : 'Мужчины.';
+	$devizion = ($devizion == 1) ? $discipline . ' классический девизион' : $discipline;
+	// Запись результатов в ячейки таблицы
+	$TableTop = theme('table', array(
+	  'header' => $header,
+	  'rows' => $rows2,
+	  'caption' => $gender . ' ' .$devizion,
+	  'attributes' => array('class' => array('MyTable')),
+	  ));
+		
+		return $TableTop;
+	}
+	
+	
+
+    		$AdSenseAdaptive = '<p><center>
+    		<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    		<!-- HEAD Rating -->
+    		<ins class="adsbygoogle"
+    			 style="display:block"
+    			 data-ad-client="ca-pub-3589435131109855"
+    			 data-ad-slot="5272531152"
+    			 data-ad-format="auto"></ins>
+    		<script>
+    		(adsbygoogle = window.adsbygoogle || []).push({});
+    		</script></center></p>';
+
+	    
+	  $AdSenseRecommended = '
+	  <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-format="autorelaxed"
+             data-ad-client="ca-pub-3589435131109855"
+             data-ad-slot="8883513412"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>';
+	
+
+      $block = array();
+		$block['subject'] = 'ТОП-10 спортсменов по троеборью и жиму лежа за 2018 г';
+        $block['content'] = "
+						<table>
+        			<tbody>
+								<tr>
+									<td style='width: 50%; vertical-align: top'>".TopYear(2,2, 'powerlifting')."</td>
+									<td style='width: 50%; vertical-align: top'>".TopYear(2,1, 'powerlifting')."</td>
+								</tr>
+								<tr>
+									<td style='width: 50%; vertical-align: top'>".TopYear(1,2, 'powerlifting')."</td>
+									<td style='width: 50%; vertical-align: top'>".TopYear(1,1, 'powerlifting')."</td>
+								</tr>
+							</tbody>
+							<tr>
+									<td colspan='2'><center>{$AdSenseAdaptive}</center></td>
+								</tr>
+							<tbody>
+								<tr>
+									<td style='width: 50%; vertical-align: top'>".TopYear(2,2, 'brench')."</td>
+									<td style='width: 50%; vertical-align: top'>".TopYear(2,1, 'brench')."</td>
+								</tr>
+								<tr>
+									<td style='width: 50%; vertical-align: top'>".TopYear(1,2, 'brench')."</td>
+									<td style='width: 50%; vertical-align: top'>".TopYear(1,1, 'brench')."</td>
+								</tr>
+							</tbody> 
+						</table>";
+      return $block;
+    }

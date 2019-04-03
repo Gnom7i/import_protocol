@@ -1,0 +1,5 @@
+name = List Protocol
+description = Блок со списком протоколов на главной
+core = 7.x
+package = Custom
+stylesheets[all][] = MyTable.css
