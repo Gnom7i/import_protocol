@@ -1,0 +1,151 @@
+<?php
+/**
+ *  page content.
+ */
+// Формирование HTML форм для импорта протокола
+function protocol_sql_form($form, &$form_state) {
+	$competition = db_query("SELECT id, name_ru FROM name_competition"); // выборка названий соревнований
+	$competition_name = array(); // формирование HTML-списка с названиями соревнований
+	for (;$item = $competition->fetchAssoc();) {
+	  $competition_name[$item['id']] = $item['name_ru'];
+	}
+	$form['competition'] = array(
+	  '#type' => 'select',
+	  '#title' => 'Название турнира',
+	  '#options' => $competition_name,
+	);
+	$form['year'] = array( 
+		'#type' => 'textfield',
+		'#title' => 'Год проведения турнира',
+		'#default_value' => 2018,
+	);
+	$form['table_name'] = array(	// Название MySQL таблицы 
+		'#type' => 'textfield',
+		'#title' => 'Название MySQL таблицы',
+		'#default_value' => '',
+	);
+	$form['discipline'] = array( // Вид дисциплины
+		'#type'	=> 'radios',
+		'#title' => t('Дисциплина'),
+		'#options' => [
+			'powerlifting' => 'Троеборье',
+			'brench' => 'Жим лежа',
+		],
+	);
+	$form['age_category'] = array( // Вид дисциплины
+		'#type'	=> 'radios',
+		'#title' => t('Возрастная категория'),
+		'#options' => [
+			'open' => 'Открытая (в импортируемой таблице нет столбца age_category)',
+		],
+	);
+	$form['actions'] = array('#type' => 'actions'); //добавляем кнопку сохранения
+	$form['actions']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => 'Распределить по таблицам',
+    );
+	return $form;
+}
+function protocol_sql_content() { // вывожу форму на экран
+	$form = drupal_get_form('protocol_sql_form');
+	$form = drupal_render($form);
+	return $form;
+}
+function protocol_sql_form_submit($form, &$form_state){	// обработка данных	
+	$table_name_protocol = 'TABLE ' . $form_state['values']['table_name'];
+  $discipline  = $form_state['values']['discipline'];
+	$competition = $form_state['values']['competition']; 
+	$age_category = $form_state['values']['age_category'];
+	$date = $form_state['values']['year']; 
+	//drupal_set_message('Данные успешно отправлены'.$form_state['values']['table_name']);
+	//dpm($form_state['values']);
+	{ // Добавляю столбцы id, fo, athlete_id, age_category
+		db_query("ALTER TABLE `{$table_name_protocol}` ADD `id` INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (`id`)");
+		db_query("ALTER TABLE `{$table_name_protocol}` ADD `fo` text  NULL");
+		db_query("ALTER TABLE `{$table_name_protocol}` ADD `athlete_id` INT  NULL");
+		if($age_category == 'open') { // Добавление столбца age_category
+			db_query("ALTER TABLE `{$table_name_protocol}` 
+				ADD `age_category` INT(1) NOT NULL DEFAULT '7'");
+		}
+	}
+	// ОБЯЗАТЕЛЬНО ДОБАВИТЬ ПРОВЕРКУ НА ПУСТЫЕ СТРОКИ
+	{ // Произвожу замены и изменяю тип данных	
+		db_query("UPDATE `{$table_name_protocol}` SET brench = REPLACE(brench, ',', '.')");
+		db_query("UPDATE `{$table_name_protocol}` SET weight = REPLACE(weight, ',', '.')");
+		db_query("UPDATE `{$table_name_protocol}` SET wilks = REPLACE(wilks, ',', '.')");
+		db_query("UPDATE `{$table_name_protocol}` SET ipf_points = REPLACE(ipf_points, ',', '.')");
+		if ($discipline == 'powerlifting'){
+			db_query("UPDATE `{$table_name_protocol}` SET squat = REPLACE(squat, ',', '.')");
+			db_query("UPDATE `{$table_name_protocol}` SET deadlift = REPLACE(deadlift, ',', '.')");
+			db_query("UPDATE `{$table_name_protocol}` SET total = REPLACE(total, ',', '.')");	
+		}	
+		db_query("UPDATE `{$table_name_protocol}` SET subject_rf = REPLACE(subject_rf, '/', '')");
+		db_query("UPDATE `{$table_name_protocol}` SET city = REPLACE(city, '/', '')");
+		db_query("UPDATE `{$table_name_protocol}` SET 
+			devizion = REPLACE(devizion, 'э', 2), 
+			devizion = REPLACE(devizion, 'к', 1),
+			gender = REPLACE(gender, 'м', 2),
+			gender = REPLACE(gender, 'ж', 1)");
+		db_query("UPDATE `{$table_name_protocol}` SET 
+			position = REPLACE(position, '-', '0'), 
+			position = REPLACE(position, '', '0'),
+			weight = REPLACE(weight, 'неявка', '0')");
+		db_query("UPDATE `{$table_name_protocol}` SET brench = '0' WHERE brench = ''");
+		db_query("UPDATE `{$table_name_protocol}` SET wilks = '0' WHERE wilks = ''");
+		$sql_atler_double = "ALTER TABLE `{$table_name_protocol}` 
+			CHANGE `weight` `weight` DOUBLE(6,2), 
+			CHANGE `brench` `brench` DOUBLE(5,1),
+			
+--			CHANGE `squat` `squat` DOUBLE(5,1), 
+--			CHANGE `deadlift` `deadlift` DOUBLE(5,1),  
+--			CHANGE `total` `total` DOUBLE(6,1),
+			
+			CHANGE `wilks` `wilks` DOUBLE(6,2),
+			CHANGE `ipf_points` `ipf_points` DOUBLE(6,2),
+			CHANGE `subject_rf` `subject_rf` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL, 
+			CHANGE `city` `city` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL";   
+	}
+	db_query($sql_atler_double);
+	// // Определение ФО, обновление и создание новых athlete_id 
+	db_query("UPDATE `{$table_name_protocol}` as p, subject as s SET p.subject_rf = s.name, p.fo = s.fo
+		WHERE TRIM(p.subject_rf) IN (s.alis, s.alis2, s.name)");
+	function insert_athlete($table_name, $devizion){ // Обновление и создание новых athlete_id
+		db_query("UPDATE `{$table_name}` as p, rating_dvfo_athlete as a 
+			SET p.athlete_id = a.athlete_id 
+			WHERE p.name = a.name
+			AND devizion = {$devizion}
+			AND p.age = a.age");
+		db_query("INSERT INTO rating_dvfo_athlete (athlete_id, gender, name, age, country, fo, subject_rf, city)
+			SELECT athlete_id, gender, name, age, 643, fo, subject_rf, city 
+			FROM `{$table_name}` as p
+			WHERE p.athlete_id IS null
+			AND devizion = {$devizion}");
+		db_query("UPDATE `{$table_name}` as p, rating_dvfo_athlete as a 
+			SET p.athlete_id = a.athlete_id 
+			WHERE p.name = a.name
+			AND devizion = {$devizion}
+			AND p.age = a.age");
+	}
+	// Обнавляю таблицу athlete_setemap
+	//db_query("DROP TABLE athlete_sitemap");
+	//db_query("");
+	insert_athlete($table_name_protocol, 1);
+	insert_athlete($table_name_protocol, 2);
+	// Формирование запроса на вставку в таблицу competition
+	if ($discipline == 'powerlifting'){
+		$sql_insert_competition = "INSERT INTO competition (athlete_id, devizion, date, competition, discipline, 
+				age_category, position, weight, squat, brench, deadlift, total, wilks, ipf_points)
+			SELECT athlete_id, devizion, '{$date}', '{$competition}', 'powerlifting', age_category, 
+				position, weight, squat, brench, deadlift, total, wilks, ipf_points 
+			FROM `{$table_name_protocol}`";	
+	}
+	if ($discipline == 'brench'){
+, ipf_points	  $sql_insert_competition = "INSERT INTO competition (athlete_id, devizion, date, competition, discipline, 
+				age_category, position, weight, brench, wilks)
+			SELECT athlete_id, devizion, '{$date}', '{$competition}', 'brench', age_category, 
+				position, weight, brench, wilks 
+			FROM `{$table_name_protocol}`";
+	}
+	db_query($sql_insert_competition);
+	drupal_set_message('Данные успешно отправлены');
+}

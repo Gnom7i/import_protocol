@@ -1,0 +1,15 @@
+<?php
+/**
+ * Implements hook_menu().
+ */
+function protocol_sql_menu() {
+  $items['protocol_sql'] = array(
+  'title' => 'Страница импорта протокола',
+  'page callback' => 'protocol_sql_content',	
+  'access arguments' => array('administer site configuration'),
+	'page arguments' => array(1),
+  'file' => 'protocol_sql.pages.inc',
+  'options' => array('attributes' => array('class' => array('test-class'))),
+  );
+  return $items;
+} 
