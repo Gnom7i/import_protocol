@@ -20,7 +20,7 @@ function topyear_block_view($delta=''){
     FROM competition AS c1 
     INNER JOIN rating_dvfo_athlete AS a1 USING (athlete_id)
     WHERE country = 643 
-    AND date =  YEAR(CURDATE()) - 1
+    AND date =  YEAR(CURDATE())
     AND gender = {$gender} 
     AND devizion = {$devizion} 
     AND discipline = '{$discipline}'
@@ -107,7 +107,7 @@ function topyear_block_view($delta=''){
 	
 
       $block = array();
-		$block['subject'] = 'ТОП-10 спортсменов по троеборью и жиму лежа за 2018 г';
+		$block['subject'] = 'ТОП-10 спортсменов по коэффициенту Wilks в троеборье и жиме лежа за 2019 год';
         $block['content'] = "
 						<table>
         			<tbody>
