@@ -96,9 +96,9 @@ function protocol_sql_form_submit($form, &$form_state){	// обработка д
 			CHANGE `weight` `weight` DOUBLE(6,2), 
 			CHANGE `brench` `brench` DOUBLE(5,1),
 			
-			CHANGE `squat` `squat` DOUBLE(5,1), 
-			CHANGE `deadlift` `deadlift` DOUBLE(5,1),  
-			CHANGE `total` `total` DOUBLE(6,1),
+--			CHANGE `squat` `squat` DOUBLE(5,1), 
+--			CHANGE `deadlift` `deadlift` DOUBLE(5,1),  
+--			CHANGE `total` `total` DOUBLE(6,1),
 			
 			CHANGE `wilks` `wilks` DOUBLE(6,2),
 			CHANGE `ipf_points` `ipf_points` DOUBLE(6,2),
